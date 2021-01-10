@@ -1,0 +1,23 @@
+#!/bin/sh -e
+
+# last 30 days by default
+N=30
+# or days specified in first argument
+if [ $# -ge 1 ]; then
+    N=$1
+fi
+
+LABELS="
+https://www.beatport.com/label/happy-techno-music/26816/tracks
+https://www.beatport.com/label/la-pera-records/27262/tracks
+https://www.beatport.com/label/cr2-records/121/tracks
+https://www.beatport.com/label/elrow-music/26655/tracks
+https://www.beatport.com/label/snatch%21-records/15225/tracks
+https://www.beatport.com/label/saved-records/1475/tracks
+https://www.beatport.com/label/sola/63883/tracks
+"
+
+for L in $LABELS
+do
+    ./beatport-show-last-tracks $L $N
+done
