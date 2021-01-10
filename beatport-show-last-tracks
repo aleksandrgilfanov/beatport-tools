@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+
+# pip3 install bs4
+
+import argparse
+from datetime import datetime
+from urllib.parse import urljoin
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
+# -*- coding: UTF-8 -*-
+
+parser = argparse.ArgumentParser()
+parser.add_argument("page", help="beatport tracks page url, e.g. https://www.beatport.com/label/la-pera-records/27262/tracks")
+parser.add_argument("days", help="show tracks for the last number of days")
+parser.usage = parser.format_help()
+args = parser.parse_args()
+tracks_page = args.page
+days = int(args.days)
+
+def get_all_pages_urls(from_url):
+    urls = []
+    urls.append(from_url)
+    root_url = urljoin(from_url, '/')
+    html = urlopen(from_url)
+
+    bsobj = BeautifulSoup(html, "html.parser")
+
+    # Find page numbers buttons
+    for page_tag in bsobj.findAll("a", {"class":"pag-number"}):
+        if 'href' in page_tag.attrs:
+            page_url = page_tag.attrs['href']
+            if page_url not in urls:
+                urls.append(root_url + page_url)
+    return urls
+
+def get_all_tracks(page):
+    res = []
+    html = urlopen(page)
+    bsobj = BeautifulSoup(html,"html.parser")
+
+    tracks = bsobj.findAll("li", {"class":"bucket-item ec-item track"})
+    for t in tracks:
+        artist = t["data-ec-d1"]
+        song = t["data-ec-name"]
+        date = t.findAll("p", {"class":"buk-track-released"})[0].contents[0]
+        res.append({'artist': artist, 'song': song, 'date': date});
+
+    return res
+
+def days_till_now(d):
+    d1 = datetime.today()
+    d2 = datetime.strptime(d, "%Y-%m-%d")
+
+    return abs((d2 - d1).days)
+
+def get_tracks_in_last_days(tracks_page, days):
+    res = []
+    all_pages = get_all_pages_urls(tracks_page)
+
+    for page in all_pages:
+        tracks = get_all_tracks(page)
+        for t in tracks:
+            if days_till_now(t['date']) > days:
+                return res
+            res.append(t)
+
+    return res
+
+last_tracks = get_tracks_in_last_days(tracks_page, days)
+for t in last_tracks:
+    print(t['date'] + ' ' + t['artist'] + ' - ' + t['song'])
