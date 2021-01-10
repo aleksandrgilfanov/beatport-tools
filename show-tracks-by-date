@@ -1,0 +1,3 @@
+#!/bin/sh -e
+
+./favourite-labels 30 | sort -r | open -f
